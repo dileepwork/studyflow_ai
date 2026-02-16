@@ -12,6 +12,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
+import { auth, googleProvider } from './firebase';
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from 'firebase/auth';
 
 const SOUNDS = {
   success: 'https://cdn.pixabay.com/audio/2022/03/15/audio_7314757398.mp3', // Refreshing chime
@@ -94,6 +102,23 @@ const App = () => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Listen for Auth State Changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser({
+          name: currentUser.displayName || currentUser.email.split('@')[0],
+          email: currentUser.email
+        });
+        setView('dashboard');
+      } else {
+        setUser(null);
+        if (view === 'dashboard') setView('home');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
     playSound('click');
@@ -141,16 +166,49 @@ const App = () => {
     }
   };
 
-  const handleAuth = (e, targetUser = 'Student') => {
-    e?.preventDefault();
-    setUser({ name: targetUser });
-    setView('dashboard');
-    playSound('success');
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const email = e.target[0].value;
+    const password = e.target[1].value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      playSound('success');
+    } catch (err) {
+      alert("Login failed: " + err.message);
+    }
   };
 
-  const handleGoogleAuth = () => {
-    alert("In a real application, this would open a Google Login popup. Overriding for demo...");
-    handleAuth(null, 'Google Student');
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    const firstName = e.target[0].value;
+    const email = e.target[2].value;
+    const password = e.target[3].value;
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      playSound('success');
+    } catch (err) {
+      alert("Signup failed: " + err.message);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      playSound('success');
+    } catch (err) {
+      alert("Google Auth failed: " + err.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setResult(null);
+      setView('home');
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   };
 
   const getDifficultyColor = (score) => {
@@ -548,7 +606,7 @@ const App = () => {
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '1.5rem', opacity: 0.6 }}>
               <span>Smart Extraction</span> • <span>NLP Logic</span> • <span>Graph Theory</span>
             </div>
-            <button className="btn-primary" onClick={() => { setView('home'); setUser(null); }} style={{ marginTop: '2rem', padding: '0.5rem 1rem', fontSize: '0.8rem', opacity: 0.5 }}>Log Out & Back Home</button>
+            <button className="btn-primary" onClick={handleLogout} style={{ marginTop: '2rem', padding: '0.5rem 1rem', fontSize: '0.8rem', opacity: 0.5 }}>Log Out & Back Home</button>
           </footer>
         </div>
       )}

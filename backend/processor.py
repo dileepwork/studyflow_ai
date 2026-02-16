@@ -1,38 +1,35 @@
 import networkx as nx
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import re
 
 def analyze_dependencies(topics):
     """
-    Detects prerequisite relationships between topics.
-    Logic: 
-    1. Rule-based: Topics mentioned in later positions often depend on earlier ones in a syllabus.
-    2. Semantic: Higher similarity between a complex topic and its components.
-    3. Structural: Unit headers are predecessors to topics within them.
+    Detects prerequisite relationships between topics using lightweight Jaccard Similarity.
     """
     G = nx.DiGraph()
     for topic in topics:
         G.add_node(topic)
     
-    # Simple rule: Consecutive topics in a syllabus often have an implicit dependency
-    for i in range(len(topics) - 1):
-        # We'll use a weak dependency for sequential topics
-        # But we need more intelligent ones for a DAG
-        pass
+    # Pre-tokenize topics for similarity
+    def get_tokens(text):
+        return set(re.findall(r'\w+', text.lower()))
 
-    # Semantic dependency
-    vectorizer = TfidfVectorizer(stop_words='english')
+    topic_tokens = [get_tokens(t) for t in topics]
+
     if len(topics) > 1:
-        tfidf_matrix = vectorizer.fit_transform(topics)
-        cosine_sim = cosine_similarity(tfidf_matrix)
-        
         for i in range(len(topics)):
             for j in range(i + 1, len(topics)):
-                # If topic i and topic j are very similar, and i comes before j,
-                # there might be a dependency.
-                if cosine_sim[i, j] > 0.3:
-                    # Heuristic: Earlier similar topics are prerequisites for later ones
+                # Jaccard Similarity: Intersection / Union
+                set_i = topic_tokens[i]
+                set_j = topic_tokens[j]
+                
+                if not set_i or not set_j: continue
+                
+                intersection = len(set_i.intersection(set_j))
+                union = len(set_i.union(set_j))
+                similarity = intersection / union
+                
+                # If topics are similar, assume earlier one is prerequisite
+                if similarity > 0.2:
                     G.add_edge(topics[i], topics[j])
 
     # Unit-based dependency
