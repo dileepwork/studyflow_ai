@@ -3,14 +3,14 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
-// Replace these with your actual keys from the Firebase Console
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyC0G3bv9YbQzqYPLYRGKotVAKzoA1h6Qw4",
+    authDomain: "studyflow-ai-ec73d.firebaseapp.com",
+    projectId: "studyflow-ai-ec73d",
+    storageBucket: "studyflow-ai-ec73d.firebasestorage.app",
+    messagingSenderId: "761813701180",
+    appId: "1:761813701180:web:eea8c44a9ae5fd473de939",
+    measurementId: "G-1E0G5Y6RVD"
 };
 
 // Initialize Firebase
