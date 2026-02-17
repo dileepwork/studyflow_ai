@@ -1,3 +1,4 @@
+// StudyFlow AI - Final Deployment v1.0.3
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
