@@ -17,9 +17,10 @@ def chat():
     response = chat_with_mentor(topic, message)
     return jsonify({"response": response})
 
-UPLOAD_FOLDER = 'uploads'
+# Handle uploads in a Vercel-compatible way (read-only filesystem except /tmp)
+UPLOAD_FOLDER = '/tmp' if os.environ.get('VERCEL') else 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
