@@ -1,6 +1,6 @@
-// StudyFlow AI - Build v1.0.1
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, BookOpen, Clock, Calendar, CheckCircle2,
   TrendingUp, Layers, ChevronRight, Download, BrainCircuit,
@@ -12,14 +12,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
-import { auth, googleProvider } from './firebase';
-import {
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from 'firebase/auth';
 
 const SOUNDS = {
   success: 'https://cdn.pixabay.com/audio/2022/03/15/audio_7314757398.mp3', // Refreshing chime
@@ -85,8 +77,8 @@ const ChatAssistant = ({ topic }) => {
 };
 
 const App = () => {
-  const [view, setView] = useState('home'); // home, login, signup, dashboard
-  const [user, setUser] = useState(null);
+  const [view, setView] = useState('home'); // home, dashboard
+  const [user, setUser] = useState({ name: 'Student' });
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -101,23 +93,6 @@ const App = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
-
-  // Listen for Auth State Changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser({
-          name: currentUser.displayName || currentUser.email.split('@')[0],
-          email: currentUser.email
-        });
-        setView('dashboard');
-      } else {
-        setUser(null);
-        if (view === 'dashboard') setView('home');
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -166,49 +141,10 @@ const App = () => {
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const email = e.target[0].value;
-    const password = e.target[1].value;
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      playSound('success');
-    } catch (err) {
-      alert("Login failed: " + err.message);
-    }
-  };
-
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    const firstName = e.target[0].value;
-    const email = e.target[2].value;
-    const password = e.target[3].value;
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      playSound('success');
-    } catch (err) {
-      alert("Signup failed: " + err.message);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      playSound('success');
-    } catch (err) {
-      alert("Google Auth failed: " + err.message);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      setResult(null);
-      setView('home');
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
+  const handleReset = () => {
+    setResult(null);
+    setFile(null);
+    setView('home');
   };
 
   const getDifficultyColor = (score) => {
@@ -234,7 +170,7 @@ const App = () => {
           <h1>Conquer Your Syllabus, Effortlessly.</h1>
           <p>Stop drowning in messy PDFs. Our AI decomposes your entire curriculum into a strategic, adaptive roadmap designed exactly for your proficiency.</p>
           <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
-            <button className="btn-primary" onClick={() => setView('login')} style={{ fontSize: '1.2rem', padding: '1.2rem 3rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button className="btn-primary" onClick={() => setView('dashboard')} style={{ fontSize: '1.2rem', padding: '1.2rem 3rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
               Get Started <ArrowRight size={24} />
             </button>
           </div>
@@ -261,78 +197,6 @@ const App = () => {
     </div>
   );
 
-  const LoginPage = () => (
-    <div className="container">
-      <motion.div className="glass card auth-card" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <LogIn size={40} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-          <h2>Welcome Back</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Login to continue your learning journey.</p>
-        </div>
-
-        <button className="btn-google" onClick={handleGoogleAuth}>
-          <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" width="20" />
-          Continue with Google
-        </button>
-
-        <div className="auth-separator">OR</div>
-
-        <form onSubmit={(e) => handleAuth(e)}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Student Email</label>
-          <input type="email" placeholder="you@university.edu" className="input-field" required />
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Password</label>
-          <input type="password" placeholder="••••••••" className="input-field" required />
-          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Login</button>
-        </form>
-
-        <div className="auth-footer">
-          Don't have an account? <span className="auth-link" onClick={() => setView('signup')}>Create one</span>
-        </div>
-      </motion.div>
-    </div>
-  );
-
-  const SignupPage = () => (
-    <div className="container">
-      <motion.div className="glass card auth-card" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <UserPlus size={40} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-          <h2>Join StudyFlow AI</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Create your account and master any syllabus.</p>
-        </div>
-
-        <button className="btn-google" onClick={handleGoogleAuth}>
-          <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" width="20" />
-          Sign up with Google
-        </button>
-
-        <div className="auth-separator">OR</div>
-
-        <form onSubmit={(e) => handleAuth(e)}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>First Name</label>
-              <input type="text" placeholder="John" className="input-field" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Last Name</label>
-              <input type="text" placeholder="Doe" className="input-field" required />
-            </div>
-          </div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Student Email</label>
-          <input type="email" placeholder="you@university.edu" className="input-field" required />
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Create Password</label>
-          <input type="password" placeholder="••••••••" className="input-field" required />
-          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Create Account</button>
-        </form>
-
-        <div className="auth-footer">
-          Already have an account? <span className="auth-link" onClick={() => setView('login')}>Log in</span>
-        </div>
-      </motion.div>
-    </div>
-  );
-
   return (
     <div className="main-wrapper">
       <button className="theme-toggle" onClick={toggleTheme} title="Toggle Appearance">
@@ -341,12 +205,8 @@ const App = () => {
 
       {view === 'home' && <LandingPage />}
 
-      {view === 'login' && <LoginPage />}
-
-      {view === 'signup' && <SignupPage />}
-
       {view === 'dashboard' && (
-        <div className="container">
+        <div className="container" style={{ paddingBottom: '3rem' }}>
           <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
@@ -427,7 +287,7 @@ const App = () => {
                 </div>
               </motion.div>
 
-              <div className="grid">
+              <div className="grid" style={{ gridTemplateColumns: '1fr 1.5fr' }}>
                 <motion.div className="glass card" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                     <Layers color="var(--primary)" />
@@ -470,6 +330,7 @@ const App = () => {
                     variants={{
                       visible: { transition: { staggerChildren: 0.08 } }
                     }}
+                    style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }}
                   >
                     {result.topics.map((topic, i) => (
                       <motion.div
@@ -485,6 +346,7 @@ const App = () => {
                           className="roadmap-card"
                           whileHover={{ scale: 1.02, x: 10 }}
                           onClick={() => { setSelectedTopic(topic); playSound('click'); }}
+                          style={{ cursor: 'pointer' }}
                         >
                           <div style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))', width: '35px', height: '35px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 'bold', flexShrink: 0, color: 'white' }}>
                             {i + 1}
@@ -606,7 +468,7 @@ const App = () => {
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '1.5rem', opacity: 0.6 }}>
               <span>Smart Extraction</span> • <span>NLP Logic</span> • <span>Graph Theory</span>
             </div>
-            <button className="btn-primary" onClick={handleLogout} style={{ marginTop: '2rem', padding: '0.5rem 1rem', fontSize: '0.8rem', opacity: 0.5 }}>Log Out & Back Home</button>
+            <button className="btn-primary" onClick={handleReset} style={{ marginTop: '2rem', padding: '0.5rem 1rem', fontSize: '0.8rem', opacity: 0.5 }}>Back to Home</button>
           </footer>
         </div>
       )}
