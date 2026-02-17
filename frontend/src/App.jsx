@@ -1,6 +1,6 @@
+// StudyFlow AI - Build v1.0.1
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, BookOpen, Clock, Calendar, CheckCircle2,
   TrendingUp, Layers, ChevronRight, Download, BrainCircuit,
