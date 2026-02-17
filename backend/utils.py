@@ -7,13 +7,8 @@ nlp = None
 def load_nlp():
     global nlp
     if nlp is None:
-        try:
-            nlp = spacy.load("en_core_web_sm")
-        except:
-            # Fallback if not downloaded yet in this process
-            import os
-            os.system("python -m spacy download en_core_web_sm")
-            nlp = spacy.load("en_core_web_sm")
+        # We rely on requirements.txt to have installed this as a package
+        nlp = spacy.load("en_core_web_sm")
     return nlp
 
 def extract_text_from_pdf(pdf_path):
